@@ -7,7 +7,7 @@ import {
   Transaction,
 } from "@solana/web3.js";
 import { MsgExecuteContract } from "@terra-money/terra.js";
-import { BigNumber, ethers } from "ethers";
+import { BigNumber, ethers, Overrides, PayableOverrides } from "ethers";
 import { isNativeDenom } from "..";
 import {
   Bridge__factory,
@@ -33,10 +33,13 @@ export async function approveEth(
   tokenBridgeAddress: string,
   tokenAddress: string,
   signer: ethers.Signer,
-  amount: ethers.BigNumberish
+  amount: ethers.BigNumberish,
+  overrides?: Overrides & { from?: string | Promise<string> }
 ) {
   const token = TokenImplementation__factory.connect(tokenAddress, signer);
-  return await (await token.approve(tokenBridgeAddress, amount)).wait();
+  return await (
+    await token.approve(tokenBridgeAddress, amount, overrides)
+  ).wait();
 }
 
 export async function transferFromEth(
@@ -45,7 +48,8 @@ export async function transferFromEth(
   tokenAddress: string,
   amount: ethers.BigNumberish,
   recipientChain: ChainId,
-  recipientAddress: Uint8Array
+  recipientAddress: Uint8Array,
+  overrides?: PayableOverrides & { from?: string | Promise<string> }
 ) {
   const fee = 0; // for now, this won't do anything, we may add later
   const bridge = Bridge__factory.connect(tokenBridgeAddress, signer);
@@ -55,7 +59,8 @@ export async function transferFromEth(
     recipientChain,
     recipientAddress,
     fee,
-    createNonce()
+    createNonce(),
+    overrides
   );
   const receipt = await v.wait();
   return receipt;
